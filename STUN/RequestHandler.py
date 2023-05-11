@@ -11,6 +11,7 @@ class STUNHandler(BaseHTTPRequestHandler):
         :return:
         None
         """
+        print(username, ip)
         return {'message': 'signed up successfully'}
 
     def get_all_peers(self):
