@@ -1,6 +1,7 @@
-import random
+import socketserver
 from http.server import BaseHTTPRequestHandler
 import json
+from RedisConnection import RedisConnection
 
 
 class STUNHandler(BaseHTTPRequestHandler):
@@ -11,19 +12,16 @@ class STUNHandler(BaseHTTPRequestHandler):
         :return:
         None
         """
-        print(username, ip)
-        return {'message': 'signed up successfully'}
+        redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
+        return {'message': redis_connection.set(username, ip)}
 
     def get_all_peers(self):
         """
         TODO: GET ALL PEERS
         :return: PEER DICTIONARY
         """
-        import random, string
-        alph = string.ascii_lowercase
-        num = string.digits
-        li = [''.join(random.choice(alph + num) for i in range(10)) for j in range(5)]
-        return {'all': li}
+        redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
+        return {'all': redis_connection.get_all_keys()}
 
     def get_peer(self, username):
         """
@@ -31,10 +29,8 @@ class STUNHandler(BaseHTTPRequestHandler):
         :param username: PEER USERNAME
         :return: PEER IP
         """
-        import random
-        print(username)
-        ip = '.'.join([str(random.randint(10, 250)) for _ in range(4)])
-        return {'ip': ip}
+        redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
+        return {'ip': redis_connection.get_by_key(username)}
 
     def do_GET(self):
         path = self.path
