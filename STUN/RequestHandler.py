@@ -6,22 +6,26 @@ from RedisConnection import RedisConnection
 
 class STUNHandler(BaseHTTPRequestHandler):
 
+    def __init__(self, request: bytes, client_address: tuple[str, int], server: socketserver.BaseServer):
+        self.redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
+        super().__init__(request, client_address, server)
+
+
     def sign_up(self, username, ip):
         """
         TODO: ADD TO CACHE
         :return:
-        None
+        STATUS
         """
-        redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
-        return {'message': redis_connection.set(username, ip)}
+        return {'message': self.redis_connection.set(username, ip)}
 
     def get_all_peers(self):
         """
         TODO: GET ALL PEERS
-        :return: PEER DICTIONARY
+        :return: PEER LIST
         """
-        redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
-        return {'all': redis_connection.get_all_keys()}
+
+        return {'all': self.redis_connection.get_all_keys()}
 
     def get_peer(self, username):
         """
@@ -29,8 +33,7 @@ class STUNHandler(BaseHTTPRequestHandler):
         :param username: PEER USERNAME
         :return: PEER IP
         """
-        redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
-        return {'ip': redis_connection.get_by_key(username)}
+        return {'ip': self.redis_connection.get_by_key(username)}
 
     def do_GET(self):
         path = self.path
