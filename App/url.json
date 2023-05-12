@@ -1,0 +1,5 @@
+{
+  "SIGNUP": "http://localhost:8888/signup",
+  "GETALL": "http://localhost:8888/getall",
+  "GETPEERIP": "http://localhost:8888/getpeerip"
+}

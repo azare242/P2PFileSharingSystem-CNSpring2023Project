@@ -2,12 +2,12 @@ import socketserver
 from http.server import BaseHTTPRequestHandler
 import json
 from RedisConnection import RedisConnection
-
+import config
 
 class STUNHandler(BaseHTTPRequestHandler):
 
     def __init__(self, request: bytes, client_address: tuple[str, int], server: socketserver.BaseServer):
-        self.redis_connection = RedisConnection(HOST='localhost', PORT=6379, db=1)
+        self.redis_connection = RedisConnection(HOST=config.get('HOST'), PORT=config.get('REDIS-PORT'), db=config.get('REDIS-DB'))
         super().__init__(request, client_address, server)
 
 
