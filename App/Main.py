@@ -19,6 +19,7 @@ def get_peer_ip(response):
         x = f'{un} : {_ip}' if _ip != 'NOT EXISTS' else _ip
         print(x)
 
+
 def signup(response):
     r = json_parser(response)
     print(r['message'])
@@ -34,11 +35,19 @@ if __name__ == '__main__':
         elif command == 'get-all-peers':
             get_all_peers(con.get(url.get('GETALL')).text)
         elif 'get-peer-ip' in command:
-            username = command.split()[1]
-            get_peer_ip(con.get(url.get('GETPEERIP'), params={'username': username}).text)
+            args = command.split()
+            if len(args) == 2:
+                username = args[1]
+                get_peer_ip(con.get(url.get('GETPEERIP'), params={'username': username}).text)
+            else:
+                print('get-peer-ip <username>')
         elif 'signup' in command:
-            username, ip = command.split()[1:]
-            signup(con.post(url.get('SIGNUP'), json={'username': username, 'ip': ip}).text)
+            args = command.split()
+            if len(args) == 3:
+                username, ip = args[1:]
+                signup(con.post(url.get('SIGNUP'), json={'username': username, 'ip': ip}).text)
+            else:
+                print('signup <username> <ip>')
         elif command == 'exit':
             break
         else:

@@ -4,12 +4,13 @@ import json
 from RedisConnection import RedisConnection
 import config
 
+
 class STUNHandler(BaseHTTPRequestHandler):
 
     def __init__(self, request: bytes, client_address: tuple[str, int], server: socketserver.BaseServer):
-        self.redis_connection = RedisConnection(HOST=config.get('HOST'), PORT=config.get('REDIS-PORT'), db=config.get('REDIS-DB'))
+        self.redis_connection = RedisConnection(HOST=config.get('HOST'), PORT=config.get('REDIS-PORT'),
+                                                db=config.get('REDIS-DB'))
         super().__init__(request, client_address, server)
-
 
     def sign_up(self, username, ip):
         """
@@ -40,9 +41,14 @@ class STUNHandler(BaseHTTPRequestHandler):
         print(path)
         if path == '/getall':
             response = self.get_all_peers()
+            status = 200
         elif '/getpeerip' in path:
             response = self.get_peer(path.split('?')[1].split('=')[1])
-        self.send_response(200)
+            status = 404 if response['ip'] == 'NOT EXISTS' else 200
+        else:
+            response = {'message': 'wtf?'}
+            status = 400
+        self.send_response(status)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         self.wfile.write(json.dumps(response).encode('utf-8'))
@@ -55,9 +61,12 @@ class STUNHandler(BaseHTTPRequestHandler):
         body_dict = json.loads(request_body)
         if path == '/signup':
             response = self.sign_up(body_dict['username'], body_dict['ip'])
+            status = 200 if response['message'] == 'SUCCESSFUL' else 406
         else:
             response = {'message': 'wtf?'}
-        self.send_response(200)
+            status = 400
+
+        self.send_response(status)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
         self.wfile.write(json.dumps(response).encode('utf-8'))
