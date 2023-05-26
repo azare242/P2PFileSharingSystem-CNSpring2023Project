@@ -1,14 +1,36 @@
 import json
 from HTTPConnection import HTTPConnection
+from Transport import Handshaking, MediaDataTransfer, TextDataTransfer, config
 
 
 class Peer:
     def __init__(self, **kwargs):
+        self.transport_config = config.Config.get_instance()
+        f = open('help-message.txt', 'r')
+        temp = "".join(f.readlines())
+        f.close()
+        self.help_message = temp
         f = open('url.json', 'r')
         self.urls = json.load(f)
         f.close()
         self.http = HTTPConnection()
+        self.wait, self.sendreq = None, None
         self.response = None
+        self.second_peer_ip = None
+
+    def new_wait(self):
+        self.wait = Handshaking.Wait(host=self.transport_config.config['HOST'],
+                                     port=self.transport_config.config['HANDSHAKE-PORT'])
+
+    def new_sendreq(self):
+        self.sendreq = Handshaking.Request(host=self.second_peer_ip,
+                                           port=self.transport_config.config['HANDSHAKE-PORT'])
+
+    def end_handshaking(self):
+        self.wait, self.sendreq = None, None
+
+    def set_second_peer_ip(self, ip):
+        self.second_peer_ip = ip
 
     def get_all_peers(self):
         self.response = json.loads(self.http.get(self.urls['GETALL']).text)
@@ -25,23 +47,26 @@ class Peer:
             x = f'{un}: {_ip}' if _ip != 'NOT EXISTS' else _ip
             print(x)
 
+    def wait_for_request(self):
+        pass
+
     def run(self):
         while True:
             command = input('>> ').lower()
             if command == 'help':
-                print('get-all-peers -> get all peers in system by username\nget-peer-ip <username> -> get peer ip by '
-                      'username\nsignup <username> <ip> -> add your ip and username in system')
+                print(self.help_message)
 
             elif command == 'get-all-peers':
                 self.get_all_peers()
 
             elif 'signup' in command:
                 args = command.split()
-                if len(args) == 3:
-                    username, ip = args[1:]
+                if len(args) == 2:
+                    username = args[1]
+                    ip = self.transport_config.config['HOST']
                     self.signup(username, ip)
                 else:
-                    print('signup <username> <ip>')
+                    print('signup <username>')
 
             elif 'get-peer-ip' in command:
                 args = command.split()
@@ -54,5 +79,3 @@ class Peer:
                 return
             else:
                 print('invalid')
-
-

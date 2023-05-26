@@ -1,0 +1,5 @@
+{
+  "HANDSHAKE-PORT": 9901,
+  "TEXT-PORT": 9911,
+  "MEDIA-PORT": 9913
+}
