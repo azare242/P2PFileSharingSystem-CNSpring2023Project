@@ -1,7 +1,7 @@
-=======================================================================
-|get-all-peers                |->  get all peers in system by username|
-|get-peer-ip <username>       |->  get peer ip by username            |
-|signup <username>            |->  add your ip and username in system |
-|request-for-connection <ip>  |->  request for connection to a peer   |
-|wait-for-requests            |->  wait 60s for requests              |
-=======================================================================
+=============================================================================
+|get-all-peers                      |->  get all peers in system by username|
+|signup <username>                  |->  add your ip and username in system |
+|request-for-connection <username>  |->  request for connection to a peer   |
+|wait-for-requests                  |->  wait 60s for requests              |
+|send-request <username>            |-> send connection request             |
+=============================================================================
