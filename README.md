@@ -11,7 +11,6 @@ This is a Peer-to-Peer (P2P) file sharing system built in Python. It uses STUN s
 ## Installation
 
 1. Clone the repository
-2. Install required packages: `pip install -r requirements.txt`
 3. Start Redis server: `redis-server`
 4. Run the STUN server: `python STUNServer/Main.py`
 5. Start the P2P file sharing system: `python App/Main.py`
