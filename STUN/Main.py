@@ -1,7 +1,7 @@
 from STUNServer import STUNServer
-import config
+from config import Config
 
 if __name__ == '__main__':
-    #print(config.get('PORT'))
-    server = STUNServer(HOST=config.get('HOST'), PORT=config.get('STUN-PORT'))
+    c = Config.get_instance()
+    server = STUNServer(HOST=c.config['HOST'], PORT=c.config['STUN-PORT'])
     server.run()

@@ -2,14 +2,15 @@ import socketserver
 from http.server import BaseHTTPRequestHandler
 import json
 from RedisConnection import RedisConnection
-import config
+from config import Config
 
 
 class STUNHandler(BaseHTTPRequestHandler):
 
     def __init__(self, request: bytes, client_address: tuple[str, int], server: socketserver.BaseServer):
-        self.redis_connection = RedisConnection(HOST=config.get('HOST'), PORT=config.get('REDIS-PORT'),
-                                                db=config.get('REDIS-DB'))
+        c = Config.get_instance()
+        self.redis_connection = RedisConnection(HOST=c.config['HOST'], PORT=c.config['REDIS-PORT'],
+                                                db=c.config['REDIS-DB'])
         super().__init__(request, client_address, server)
 
     def sign_up(self, username, ip):
