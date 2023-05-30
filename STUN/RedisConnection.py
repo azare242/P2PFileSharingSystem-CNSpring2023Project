@@ -14,9 +14,6 @@ class RedisConnection:
 
     def set(self, key, value):
 
-        if key in self.get_all_keys():
-            return 'EXISTS'
-
         connection = redis.Redis(connection_pool=self.pool)
         connection.set(key, value)
         return 'SUCCESSFUL'
@@ -27,4 +24,3 @@ class RedisConnection:
 
         connection = redis.Redis(connection_pool=self.pool)
         return connection.get(key).decode('utf-8')
-

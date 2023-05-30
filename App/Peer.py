@@ -5,6 +5,7 @@ from Transport import Handshaking, config
 
 class Peer:
     def __init__(self, **kwargs):
+        self.un = None
         self.urls = {}
         self.http = HTTPConnection()
         self.transport_config = config.Config.get_instance()
@@ -20,7 +21,11 @@ class Peer:
         self.init_program()
 
     def init_program(self):
+        self.un = input('enter username: ')
+        print('initializing program...')
+        self.signup(self.un, self.transport_config.config['HOST'])
         self.all_peers = self.get_all_peers()
+        print(f'signup as {self.un}')
 
     def construct_urls(self):
         f = open('url.json', 'r')
@@ -48,9 +53,10 @@ class Peer:
         self.response = json.loads(self.http.get(self.urls['GETALL']).text)
         return self.response['all']
 
-    def signup(self, username, ip):
+    def signup(self, username, ip, SHOW_MESSAGE=False):
         self.response = json.loads(self.http.post(self.urls['SIGNUP'], json={'username': username, 'ip': ip}).text)
-        print(self.response['message'])
+        if SHOW_MESSAGE:
+            print(self.response['message'])
 
     def get_peer_ip(self, username, RETURN_IP=False):
         self.response = json.loads(self.http.get(self.urls['GETPEERIP'], json={'username': username}).text)
@@ -62,7 +68,6 @@ class Peer:
             else:
                 result = _ip
         if RETURN_IP:
-            print(result)
             return result
 
     def wait_for_request(self):
@@ -75,6 +80,7 @@ class Peer:
         self.new_snd()
         self.snd.run(address=(ip, self.transport_config.config['HANDSHAKE-PORT']))
         self.end_handshaking()
+
     def run(self):
 
         while True:
@@ -90,18 +96,12 @@ class Peer:
                 args = command.split()
                 if len(args) == 2:
                     username = args[1]
+                    self.un = username
                     ip = self.transport_config.config['HOST']
-                    self.signup(username, ip)
+                    self.signup(username, ip, SHOW_MESSAGE=True)
                 else:
                     print('signup <username>')
 
-            elif 'get-peer-ip' in command:
-                args = command.split()
-                if len(args) == 2:
-                    username = args[1]
-                    self.get_peer_ip(username)
-                else:
-                    print('get-peer-ip <username>')
             elif command == 'wait-for-requests':
                 self.wait_for_request()
             elif 'send-request' in command:
