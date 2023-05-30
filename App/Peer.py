@@ -36,11 +36,10 @@ class Peer:
                                         port=self.transport_config.config['HANDSHAKE-PORT'])
 
     def new_snd(self):
-        self.snd = Handshaking.Sender(host=self.target_peer_ip,
-                                      port=self.transport_config.config['HANDSHAKE-PORT'])
+        self.snd = Handshaking.Sender()
 
     def end_handshaking(self):
-        self.target_peer_ip, self.wait, self.sendreq = None, None, None
+        self.target_peer_ip, self.rec, self.snd = None, None, None
 
     def set_target_peer_ip(self, ip):
         self.target_peer_ip = ip
