@@ -1,5 +1,7 @@
 {
-  "SIGNUP": "http://localhost:8888/signup",
-  "GETALL": "http://localhost:8888/getall",
-  "GETPEERIP": "http://localhost:8888/getpeerip"
+  "HTTP-HOST": "localhost",
+  "HTTP-PORT": 8888,
+  "SIGNUP": "/signup",
+  "GETALL": "/getall",
+  "GETPEERIP": "/getpeerip"
 }

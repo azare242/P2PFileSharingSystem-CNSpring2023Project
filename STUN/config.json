@@ -1,4 +1,5 @@
 {
+  "HOST": "localhost",
   "STUN-PORT": 8888,
   "REDIS-PORT": 6379,
   "REDIS-DB": 1

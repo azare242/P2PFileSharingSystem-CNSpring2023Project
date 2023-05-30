@@ -25,6 +25,5 @@ class Config:
         config_path = os.path.join(current_directory, 'config.json')
         with open(config_path, 'r') as f:
             self.config = json.load(f)
-        self.config['HOST'] = socket.gethostbyname(socket.gethostname())
 
 

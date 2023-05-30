@@ -5,18 +5,26 @@ from Transport import Handshaking, MediaDataTransfer, TextDataTransfer, config
 
 class Peer:
     def __init__(self, **kwargs):
+        self.urls = {}
+        self.http = HTTPConnection()
         self.transport_config = config.Config.get_instance()
         f = open('help-message.txt', 'r')
         temp = "".join(f.readlines())
         f.close()
         self.help_message = temp
-        f = open('url.json', 'r')
-        self.urls = json.load(f)
-        f.close()
-        self.http = HTTPConnection()
+        self.construct_urls()
         self.wait, self.sendreq = None, None
         self.response = None
         self.second_peer_ip = None
+
+    def construct_urls(self):
+        f = open('url.json', 'r')
+        temp = json.load(f)
+        f.close()
+        base_url = f'http://{temp["HTTP-HOST"]}:{temp["HTTP-PORT"]}'
+        self.urls['SIGNUP'] = base_url + temp['SIGNUP']
+        self.urls['GETPEERIP'] = base_url + temp['GETPEERIP']
+        self.urls['GETALL'] = base_url + temp['GETALL']
 
     def new_wait(self):
         self.wait = Handshaking.Wait(host=self.transport_config.config['HOST'],
