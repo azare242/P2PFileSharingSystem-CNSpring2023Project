@@ -42,7 +42,7 @@ class Peer:
         print(self.response['message'])
 
     def get_peer_ip(self, username):
-        self.response = json.loads(self.http.get(self.urls['GETPEERIP'], params={'username': username}).text)
+        self.response = json.loads(self.http.get(self.urls['GETPEERIP'], json={'username': username}).text)
         for un, _ip in self.response.items():
             x = f'{un}: {_ip}' if _ip != 'NOT EXISTS' else _ip
             print(x)

@@ -14,7 +14,6 @@ class STUNHandler(BaseHTTPRequestHandler):
 
     def sign_up(self, username, ip):
         """
-        TODO: ADD TO CACHE
         :return:
         STATUS
         """
@@ -22,7 +21,6 @@ class STUNHandler(BaseHTTPRequestHandler):
 
     def get_all_peers(self):
         """
-        TODO: GET ALL PEERS
         :return: PEER LIST
         """
 
@@ -30,11 +28,19 @@ class STUNHandler(BaseHTTPRequestHandler):
 
     def get_peer(self, username):
         """
-        TODO: GET PEER IP
         :param username: PEER USERNAME
         :return: PEER IP
         """
         return {'ip': self.redis_connection.get_by_key(username)}
+
+    def read_json_from_body(self):
+        """
+
+        :return: json dict from http request body
+        """
+        length = int(self.headers.get('Content-Length', 0))
+        request_body = self.rfile.read(length).decode('utf-8')
+        return json.loads(request_body)
 
     def do_GET(self):
         path = self.path
@@ -43,10 +49,10 @@ class STUNHandler(BaseHTTPRequestHandler):
             response = self.get_all_peers()
             status = 200
         elif '/getpeerip' in path:
-            response = self.get_peer(path.split('?')[1].split('=')[1])
+            response = self.get_peer(self.read_json_from_body()['username'])
             status = 404 if response['ip'] == 'NOT EXISTS' else 200
         else:
-            response = {'message': 'wtf?'}
+            response = {'message': 'bad request'}
             status = 400
         self.send_response(status)
         self.send_header('Content-type', 'application/json')
@@ -55,15 +61,12 @@ class STUNHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path
-        print(path)
-        length = int(self.headers.get('Content-Length', 0))
-        request_body = self.rfile.read(length).decode('utf-8')
-        body_dict = json.loads(request_body)
+        body_dict = self.read_json_from_body()
         if path == '/signup':
             response = self.sign_up(body_dict['username'], body_dict['ip'])
             status = 200 if response['message'] == 'SUCCESSFUL' else 406
         else:
-            response = {'message': 'wtf?'}
+            response = {'message': 'bad request'}
             status = 400
 
         self.send_response(status)
