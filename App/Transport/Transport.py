@@ -67,10 +67,11 @@ class Receiver:
         h = int(h_data.decode('utf-8'))
         ch = []
         while True:
-            chun, _ = self.socket_MEDIA.recvfrom(1024)
+            chun, add = self.socket_MEDIA.recvfrom(1024)
             if chun == b'EOF':
                 break
             ch.append(chun)
+            self.socket_MEDIA.sendto(b'ACK', add)
         media_bytes = b''.join(ch)
         save_path = input('enter abspath for save file:')
         Image.frombytes("RGB", (w, h), media_bytes).save(save_path)
@@ -134,15 +135,18 @@ class Sender:
         self.socket_MEDIA.sendto(hb, (target_peer_ip, self.c.config['MEDIA-PORT']))
         block_size = 1024
         for pointer in range(0, len(data_bytes), block_size):
-            L = pointer
-            R = pointer + block_size
-            self.socket_MEDIA.sendto(data_bytes[L:R], (target_peer_ip, self.c.config['MEDIA-PORT']))
+            while True:
+                L = pointer
+                R = pointer + block_size
+                self.socket_MEDIA.sendto(data_bytes[L:R], (target_peer_ip, self.c.config['MEDIA-PORT']))
+                if ACK(self.socket_MEDIA):
+                    break
         self.socket_MEDIA.sendto(b'EOF', (target_peer_ip, self.c.config['MEDIA-PORT']))
 
     def check_file(self, target_peer_ip):
         file_name = self.socket_TEXT.recv(1024)
         ans = input(
-            f'peer wants {file_name.decode("utf-8")} you have it? if you have enter "y" and if you dont enter "n": ')
+            f'peer wants "{file_name.decode("utf-8")}" you have it? if you have enter "y" and if you dont enter "n": ')
 
         if ans.lower() == 'n':
             self.socket_TEXT.send(b'NO')
