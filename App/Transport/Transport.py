@@ -6,6 +6,15 @@ from PIL import Image
 from App.Transport.config import Config
 
 
+def check_path(path):
+    try:
+        f = open(path, 'rb')
+        f.close()
+        return True
+    except:
+        return False
+
+
 def ACK(__socket, timeout=5):
     try:
         r, _, _ = select.select([__socket], [], [], timeout)
@@ -72,7 +81,7 @@ class Receiver:
         response = tcp_conn.recv(1024)
         if response.decode('utf-8') == 'YES':
             tcp_conn.send(b'ok')
-            # self.get_file()
+            self.get_file()
         else:
             print(f'peer does not have {description}')
 
@@ -88,11 +97,11 @@ class Receiver:
                 break
         print(f'tcp connection from {tcp_address}')
         tcp_conn.send(b'hey')
-        # data, udp_address = self.socket_MEDIA.recvfrom(1024)
-        # if udp_address[0] == expected_ip and data.decode() == 'MEDIA-CONNECTION':
-        #     self.socket_MEDIA.sendto(b'CONNECTION ACCEPTED', udp_address)
-        #     print(f'udp connection from {udp_address}')
-        self.description_file(expected_ip, tcp_conn)
+        data, udp_address = self.socket_MEDIA.recvfrom(1024)
+        if udp_address[0] == expected_ip and data.decode() == 'MEDIA-CONNECTION':
+            self.socket_MEDIA.sendto(b'CONNECTION ACCEPTED', udp_address)
+            print(f'udp connection from {udp_address}')
+            self.description_file(expected_ip, tcp_conn)
 
 
 class Sender:
@@ -132,15 +141,23 @@ class Sender:
 
     def check_file(self, target_peer_ip):
         file_name = self.socket_TEXT.recv(1024)
-        abspath = input(
-            f'peer wants {file_name.decode("utf-8")} you have it? if you have enter abspath and if you dont enter "n"')
-        if abspath.lower() == 'n':
+        ans = input(
+            f'peer wants {file_name.decode("utf-8")} you have it? if you have enter "y" and if you dont enter "n": ')
+
+        if ans.lower() == 'n':
             self.socket_TEXT.send(b'NO')
             return
         else:
+            abspath = ''
+            while True:
+                abspath = input('enter abspath: ')
+                if check_path(abspath):
+                    break
+                else:
+                    print('no such valid file', end=' ')
             self.socket_TEXT.send(b'YES')
             _ = self.socket_TEXT.recv(1024)
-            # self.send_file(abspath, target_peer_ip)
+            self.send_file(abspath, target_peer_ip)
 
     def start_connection(self, target_peer_ip):
         self.socket_TEXT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,8 +165,8 @@ class Sender:
         self.socket_TEXT.connect((target_peer_ip, self.c.config['TEXT-PORT']))
         print(self.socket_TEXT.recv(1024).decode('utf-8'))
         print('tcp connected...')
-        # self.socket_MEDIA.sendto(b'MEDIA-CONNECTION', (target_peer_ip, self.c.config['MEDIA-PORT']))
-        # data, udp_address = self.socket_MEDIA.recvfrom(1024)
-        # if udp_address[0] == target_peer_ip and data.decode() == 'CONNECTION ACCEPTED':
-        #     print('udp connected...')
-        self.check_file(target_peer_ip)
+        self.socket_MEDIA.sendto(b'MEDIA-CONNECTION', (target_peer_ip, self.c.config['MEDIA-PORT']))
+        data, udp_address = self.socket_MEDIA.recvfrom(1024)
+        if udp_address[0] == target_peer_ip and data.decode() == 'CONNECTION ACCEPTED':
+            print('udp connected...')
+            self.check_file(target_peer_ip)
