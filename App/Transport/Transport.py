@@ -1,5 +1,6 @@
 import socket
 import select
+from PIL import Image
 
 # from config import Config
 from App.Transport.config import Config
@@ -50,6 +51,31 @@ class Receiver:
         except socket.timeout:
             print('timeout exceeded')
 
+    def get_file(self):
+        w_data, _ = self.socket_MEDIA.recvfrom(1024)
+        h_data, _ = self.socket_MEDIA.recvfrom(1024)
+        w = int(w_data.decode('utf-8'))
+        h = int(h_data.decode('utf-8'))
+        ch = []
+        while True:
+            chun, _ = self.socket_MEDIA.recvfrom(1024)
+            if chun == b'EOF':
+                break
+            ch.append(chun)
+        media_bytes = b''.join(ch)
+        save_path = input('enter abspath for save file:')
+        Image.frombytes("RGB", (w, h), media_bytes).save(save_path)
+
+    def description_file(self, expected_ip, tcp_conn):
+        description = input('enter your description of what file you want from peer: ')
+        tcp_conn.send(description.encode('utf-8'))
+        response = tcp_conn.recv(1024)
+        if response.decode('utf-8') == 'YES':
+            tcp_conn.send(b'ok')
+            # self.get_file()
+        else:
+            print(f'peer does not have {description}')
+
     def start_connection(self, expected_ip):
         self.socket_TEXT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket_MEDIA = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -61,10 +87,12 @@ class Receiver:
             if tcp_address[0] == expected_ip:
                 break
         print(f'tcp connection from {tcp_address}')
-        data, udp_address = self.socket_MEDIA.recvfrom(1024)
-        if udp_address[0] == expected_ip and data.decode() == 'MEDIA-CONNECTION':
-            self.socket_MEDIA.sendto(b'CONNECTION ACCEPTED', udp_address)
-            print(f'udp connection from {udp_address}')
+        tcp_conn.send(b'hey')
+        # data, udp_address = self.socket_MEDIA.recvfrom(1024)
+        # if udp_address[0] == expected_ip and data.decode() == 'MEDIA-CONNECTION':
+        #     self.socket_MEDIA.sendto(b'CONNECTION ACCEPTED', udp_address)
+        #     print(f'udp connection from {udp_address}')
+        self.description_file(expected_ip, tcp_conn)
 
 
 class Sender:
@@ -88,12 +116,40 @@ class Sender:
             print('rejected')
         return
 
+    def send_file(self, abspath, target_peer_ip):
+        img = Image.open(abspath)
+        data_bytes = img.tobytes()
+        wb = str(img.size[0]).encode('utf-8')
+        hb = str(img.size[1]).encode('utf-8')
+        self.socket_MEDIA.sendto(wb, (target_peer_ip, self.c.config['MEDIA-PORT']))
+        self.socket_MEDIA.sendto(hb, (target_peer_ip, self.c.config['MEDIA-PORT']))
+        block_size = 1024
+        for pointer in range(0, len(data_bytes), block_size):
+            L = pointer
+            R = pointer + block_size
+            self.socket_MEDIA.sendto(data_bytes[L:R], (target_peer_ip, self.c.config['MEDIA-PORT']))
+        self.socket_MEDIA.sendto(b'EOF', (target_peer_ip, self.c.config['MEDIA-PORT']))
+
+    def check_file(self, target_peer_ip):
+        file_name = self.socket_TEXT.recv(1024)
+        abspath = input(
+            f'peer wants {file_name.decode("utf-8")} you have it? if you have enter abspath and if you dont enter "n"')
+        if abspath.lower() == 'n':
+            self.socket_TEXT.send(b'NO')
+            return
+        else:
+            self.socket_TEXT.send(b'YES')
+            _ = self.socket_TEXT.recv(1024)
+            # self.send_file(abspath, target_peer_ip)
+
     def start_connection(self, target_peer_ip):
         self.socket_TEXT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket_MEDIA = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket_TEXT.connect((target_peer_ip, self.c.config['TEXT-PORT']))
-        print('tcp connection...')
-        self.socket_MEDIA.sendto(b'MEDIA-CONNECTION', (target_peer_ip, self.c.config['MEDIA-PORT']))
-        data, udp_address = self.socket_MEDIA.recvfrom(1024)
-        if udp_address[0] == target_peer_ip and data.decode() == 'CONNECTION ACCEPTED':
-            print('udp connection...')
+        print(self.socket_TEXT.recv(1024).decode('utf-8'))
+        print('tcp connected...')
+        # self.socket_MEDIA.sendto(b'MEDIA-CONNECTION', (target_peer_ip, self.c.config['MEDIA-PORT']))
+        # data, udp_address = self.socket_MEDIA.recvfrom(1024)
+        # if udp_address[0] == target_peer_ip and data.decode() == 'CONNECTION ACCEPTED':
+        #     print('udp connected...')
+        self.check_file(target_peer_ip)

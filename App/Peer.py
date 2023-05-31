@@ -1,6 +1,6 @@
 import json
 from HTTPConnection import HTTPConnection
-from Transport import Handshaking, config
+from Transport import Transport, config
 
 
 class Peer:
@@ -37,11 +37,11 @@ class Peer:
         self.urls['GETALL'] = base_url + temp['GETALL']
 
     def new_rec(self):
-        self.rec = Handshaking.Receiver(host=self.transport_config.config['HOST'],
+        self.rec = Transport.Receiver(host=self.transport_config.config['HOST'],
                                         handshake_port=self.transport_config.config['HANDSHAKE-PORT'])
 
     def new_snd(self):
-        self.snd = Handshaking.Sender()
+        self.snd = Transport.Sender()
 
     def end_handshaking(self):
         self.target_peer_ip, self.rec, self.snd = None, None, None
