@@ -1,6 +1,7 @@
 import socket
 import select
-#from config import Config
+
+# from config import Config
 from App.Transport.config import Config
 
 
@@ -41,7 +42,8 @@ class Receiver:
                     response = input(f'Request Received From {calling_peer_address[0]}, 1-accept, anything-reject')
                     msg = 'ACCEPTED' if response == '1' else 'REJECTED'
                     self.socket_HANDSHAKING.sendto(msg.encode('utf-8'), calling_peer_address)
-                    self.start_connection(calling_peer_address[0])
+                    if response == '1':
+                        self.start_connection(calling_peer_address[0])
             else:
                 print('timeout exceeded')
 
@@ -59,6 +61,10 @@ class Receiver:
             if tcp_address[0] == expected_ip:
                 break
         print(f'tcp connection from {tcp_address}')
+        data, udp_address = self.socket_MEDIA.recvfrom(1024)
+        if udp_address[0] == expected_ip and data.decode() == 'MEDIA-CONNECTION':
+            self.socket_MEDIA.sendto(b'CONNECTION ACCEPTED', udp_address)
+            print(f'udp connection from {udp_address}')
 
 
 class Sender:
@@ -87,3 +93,7 @@ class Sender:
         self.socket_MEDIA = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket_TEXT.connect((target_peer_ip, self.c.config['TEXT-PORT']))
         print('tcp connection...')
+        self.socket_MEDIA.sendto(b'MEDIA-CONNECTION', (target_peer_ip, self.c.config['MEDIA-PORT']))
+        data, udp_address = self.socket_MEDIA.recvfrom(1024)
+        if udp_address[0] == target_peer_ip and data.decode() == 'CONNECTION ACCEPTED':
+            print('udp connection...')
