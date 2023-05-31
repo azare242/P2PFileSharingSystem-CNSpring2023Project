@@ -38,7 +38,7 @@ class Peer:
 
     def new_rec(self):
         self.rec = Handshaking.Receiver(host=self.transport_config.config['HOST'],
-                                        port=self.transport_config.config['HANDSHAKE-PORT'])
+                                        handshake_port=self.transport_config.config['HANDSHAKE-PORT'])
 
     def new_snd(self):
         self.snd = Handshaking.Sender()
