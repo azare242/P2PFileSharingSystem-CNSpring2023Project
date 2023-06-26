@@ -60,14 +60,35 @@ class Receiver:
         except socket.timeout:
             print('timeout exceeded')
 
+    def get_file_(self):
+        try:
+            r, _, _ = select.select([self.socket_MEDIA], [], [], 10)
+            if self.socket_MEDIA in r:
+                data, address = self.socket_MEDIA.recvfrom(1024)
+                return data, address
+            else:
+                return None, None
+
+        except socket.timeout as e:
+            return None, None
+
     def get_file(self):
-        w_data, _ = self.socket_MEDIA.recvfrom(1024)
-        h_data, _ = self.socket_MEDIA.recvfrom(1024)
+        w_data, _ = self.get_file_()
+        if w_data is None:
+            print('connection lost')
+            return
+        h_data, _ = self.get_file_()
+        if h_data is None:
+            print('connection lost')
+            return
         w = int(w_data.decode('utf-8'))
         h = int(h_data.decode('utf-8'))
         ch = []
         while True:
-            chun, add = self.socket_MEDIA.recvfrom(1024)
+            chun, add = self.get_file_()
+            if chun is None:
+                print('connection lost')
+                return
             if chun == b'EOF':
                 break
             ch.append(chun)
@@ -78,13 +99,17 @@ class Receiver:
 
     def description_file(self, expected_ip, tcp_conn):
         description = input('enter your description of what file you want from peer: ')
-        tcp_conn.send(description.encode('utf-8'))
-        response = tcp_conn.recv(1024)
-        if response.decode('utf-8') == 'YES':
-            tcp_conn.send(b'ok')
-            self.get_file()
-        else:
-            print(f'peer does not have {description}')
+        try:
+            tcp_conn.send(description.encode('utf-8'))
+            response = tcp_conn.recv(1024)
+            if response.decode('utf-8') == 'YES':
+                tcp_conn.send(b'ok')
+                self.get_file()
+            else:
+                print(f'peer does not have {description}')
+        except socket.error:
+            print('connection lost')
+            return
 
     def start_connection(self, expected_ip):
         self.socket_TEXT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -134,17 +159,29 @@ class Sender:
         self.socket_MEDIA.sendto(wb, (target_peer_ip, self.c.config['MEDIA-PORT']))
         self.socket_MEDIA.sendto(hb, (target_peer_ip, self.c.config['MEDIA-PORT']))
         block_size = 1024
+        resend_counter = 0
         for pointer in range(0, len(data_bytes), block_size):
             while True:
+                if resend_counter == 3:
+                    print('connection lost')
+                    return
+                resend_counter += 1
                 L = pointer
                 R = pointer + block_size
                 self.socket_MEDIA.sendto(data_bytes[L:R], (target_peer_ip, self.c.config['MEDIA-PORT']))
                 if ACK(self.socket_MEDIA):
+                    resend_counter = 0
                     break
+
         self.socket_MEDIA.sendto(b'EOF', (target_peer_ip, self.c.config['MEDIA-PORT']))
 
     def check_file(self, target_peer_ip):
-        file_name = self.socket_TEXT.recv(1024)
+        try:
+            file_name = self.socket_TEXT.recv(1024)
+        except socket.error:
+            print('connection lost')
+            return
+
         ans = input(
             f'peer wants "{file_name.decode("utf-8")}" you have it? if you have enter "y" and if you dont enter "n": ')
 
