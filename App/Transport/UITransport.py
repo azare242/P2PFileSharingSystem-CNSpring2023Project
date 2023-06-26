@@ -40,8 +40,6 @@ class UISender:
             pass
         return
 
-
-
     def send_file(self, abspath, target_peer_ip):
         img = Image.open(abspath)
         data_bytes = img.tobytes()
@@ -58,7 +56,6 @@ class UISender:
                 if ACK(self.socket_MEDIA):
                     break
         self.socket_MEDIA.sendto(b'EOF', (target_peer_ip, self.c.config['MEDIA-PORT']))
-
 
     def check_file(self, target_peer_ip):
         file_name = self.socket_TEXT.recv(1024)

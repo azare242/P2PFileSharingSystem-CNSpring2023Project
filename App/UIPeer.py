@@ -2,6 +2,7 @@ import tkinter as tk
 import json
 from App.HTTPConnection import HTTPConnection
 from App.Transport import config
+from Transport.UITransport import *
 
 
 class MyApp:
@@ -32,6 +33,30 @@ class MyApp:
         self.urls['SIGNUP'] = base_url + temp['SIGNUP']
         self.urls['GETPEERIP'] = base_url + temp['GETPEERIP']
         self.urls['GETALL'] = base_url + temp['GETALL']
+
+    def new_rec(self):
+        self.rec = UIReceiver(host=self.transport_config.config['HOST'],
+                              handshake_port=self.transport_config.config['HANDSHAKE-PORT'])
+
+    def new_snd(self):
+        self.snd = UISender()
+
+    def end_handshaking(self):
+        self.target_peer_ip, self.rec, self.snd = None, None, None
+
+    def set_target_peer_ip(self, ip):
+        self.target_peer_ip = ip
+
+    def wait_for_request(self):
+        self.new_rec()
+        self.rec.run()
+        self.end_handshaking()
+
+    def send_request(self, ip):
+        self.set_target_peer_ip(ip)
+        self.new_snd()
+        self.snd.run(address=(ip, self.transport_config.config['HANDSHAKE-PORT']))
+        self.end_handshaking()
 
     def error_scene(self, err):
         pass
@@ -89,7 +114,6 @@ class MyApp:
             self.button_back.pack_forget()
             self.state = 'MAIN'
 
-
     def pack_main_menu_buttons(self):
         self.exit_button.pack(side='left', padx=10)
         self.help_button.pack(side='left', padx=10)
@@ -118,19 +142,24 @@ class MyApp:
 
         if SHOW_MESSAGE:
             self.label.config(text=self.response['message'])
+            self.back()
         if self.state != 'INIT':
-            self.state = 'SIGNUP'
+            self.state = 'MAIN'
         print(self.state)
 
     def send_http(self):
 
-        self.un = self.textbox.get()
+        self.inp = self.textbox.get()
         self.send_bottun.pack_forget()
         self.textbox.pack_forget()
         self.textbox_lable.pack_forget()
         # self.textbox_lable.config(text='waiting for server response' if self.state != 'INIT' else 'initializing program...')
 
-        self.signup(self.un, self.transport_config.config['HOST'], SHOW_MESSAGE=self.state == 'SIGNUP')
+        if self.state == 'SIGNUP' or self.state == 'INIT':
+            self.signup(self.inp, self.transport_config.config['HOST'], SHOW_MESSAGE=self.state == 'SIGNUP')
+        if self.state == 'GETPEERIP':
+            pass
+
         if self.state == 'INIT':
             self.get_all_peers()
             self.pack_main_menu_buttons()
@@ -139,7 +168,7 @@ class MyApp:
 
     def get_peer_ip(self):
         self.label.config(text='get peer ip')
-        self.state = 'HELP'
+        self.state = 'O'
         self.button_back.pack(anchor='center')
 
     def show_help(self):
@@ -159,7 +188,10 @@ class MyApp:
 
             self.response = json.loads(self.http.get(self.urls['GETALL']).text)
             self.all_peers = self.response['all']
-            self.label.config(text=str(self.all_peers))
+            allpeerstxt = ''
+            for x in self.all_peers:
+                allpeerstxt += f'--\t\t{x:25}\n'
+            self.label.config(text=allpeerstxt)
             self.button_back.pack(anchor='center')
             self.state = 'GETALL'
         print(self.state)
@@ -170,7 +202,7 @@ class MyApp:
         self.textbox_lable.pack(side='left', anchor='n')
         self.textbox.pack(anchor='center')
         self.send_bottun.pack(side='top')
-
+        self.label.config(text='')
         if self.state != 'MAIN':
             self.back()
         self.state = 'SIGNUP'
