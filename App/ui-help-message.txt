@@ -1,0 +1,7 @@
+=============================================================================
+|get-all-peers                      |->  get all peers in system by username|
+|signup                             |->  add your ip and username in system |
+|request-for-connection             |->  request for connection to a peer   |
+|wait-for-requests                  |->  wait for requests                  |
+|send-request                       |-> send connection request             |
+=============================================================================
